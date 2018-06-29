@@ -23,9 +23,9 @@ import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {BidiDirection} from 'UnicodeBidiDirection';
 
 const DraftEditorBlockNode = require('DraftEditorBlockNode.react');
-const DraftOffsetKey = require('DraftOffsetKey');
 const EditorState = require('EditorState');
 const React = require('React');
+const wrapBlockNodes = require('wrapBlockNodes');
 
 const nullthrows = require('nullthrows');
 
@@ -49,6 +49,7 @@ type Props = {
  * (for instance, ARIA props) must be allowed to update without affecting
  * the contents of the editor.
  */
+
 class DraftEditorContentsExperimental extends React.Component<Props> {
   shouldComponentUpdate(nextProps: Props): boolean {
     const prevEditorState = this.props.editorState;
@@ -123,6 +124,7 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
 
     while (nodeBlock) {
       const blockKey = nodeBlock.getKey();
+
       const blockProps = {
         blockRenderMap,
         blockRendererFn,
@@ -145,12 +147,13 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
       const configForType =
         blockRenderMap.get(nodeBlock.getType()) ||
         blockRenderMap.get('unstyled');
+
       const wrapperTemplate = configForType.wrapper;
+
       processedBlocks.push({
-        block: <DraftEditorBlockNode key={blockKey} {...blockProps} />,
         wrapperTemplate,
-        key: blockKey,
-        offsetKey: DraftOffsetKey.encode(blockKey, 0, 0),
+        block: nodeBlock,
+        element: <DraftEditorBlockNode key={blockKey} {...blockProps} />,
       });
 
       const nextBlockKey = nodeBlock.getNextSiblingKey();
@@ -158,32 +161,7 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
     }
 
     // Group contiguous runs of blocks that have the same wrapperTemplate
-    const outputBlocks = [];
-    for (let ii = 0; ii < processedBlocks.length; ) {
-      const info: any = processedBlocks[ii];
-      if (info.wrapperTemplate) {
-        const blocks = [];
-        do {
-          blocks.push(processedBlocks[ii].block);
-          ii++;
-        } while (
-          ii < processedBlocks.length &&
-          processedBlocks[ii].wrapperTemplate === info.wrapperTemplate
-        );
-        const wrapperElement = React.cloneElement(
-          info.wrapperTemplate,
-          {
-            key: info.key + '-wrap',
-            'data-offset-key': info.offsetKey,
-          },
-          blocks,
-        );
-        outputBlocks.push(wrapperElement);
-      } else {
-        outputBlocks.push(info.block);
-        ii++;
-      }
-    }
+    const outputBlocks = wrapBlockNodes(processedBlocks, content);
 
     return <div data-contents="true">{outputBlocks}</div>;
   }
