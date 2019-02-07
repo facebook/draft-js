@@ -22,6 +22,7 @@ const ContentBlockNode = require('ContentBlockNode');
 
 const convertFromHTMLtoContentBlocksClassic = require('convertFromHTMLToContentBlocks');
 const convertFromHTMLtoContentBlocksNew = require('convertFromHTMLToContentBlocks2');
+const convertFromRawToDraftState = require('convertFromRawToDraftState');
 const generateRandomKey = require('generateRandomKey');
 const getSafeBodyFromHTML = require('getSafeBodyFromHTML');
 const gkx = require('gkx');
@@ -45,6 +46,29 @@ const DraftPasteProcessor = {
     html: string,
     blockRenderMap?: DraftBlockRenderMap,
   ): ?{contentBlocks: ?Array<BlockNodeRecord>, entityMap: EntityMap} {
+    const body = getSafeBodyFromHTML(html);
+    const fragmentElt = body && body.querySelector('[data-editor-content]');
+    const fragmentAttr =
+      (fragmentElt && fragmentElt.getAttribute('data-editor-content')) || null;
+
+    // Handle the paste without converting the HTML if it comes from another Draft.js editor.
+    if (fragmentAttr) {
+      let rawContent;
+
+      try {
+        // If JSON parsing fails, handle the paste as normal HTML.
+        rawContent = JSON.parse(fragmentAttr);
+      } catch (error) {}
+
+      if (rawContent) {
+        const content = convertFromRawToDraftState(rawContent);
+        return {
+          contentBlocks: content.getBlocksAsArray(),
+          entityMap: content.getEntityMap(),
+        };
+      }
+    }
+
     return convertFromHTMLtoContentBlocks(
       html,
       getSafeBodyFromHTML,
