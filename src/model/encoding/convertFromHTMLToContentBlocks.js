@@ -566,6 +566,14 @@ const genFragment = (
     child = sibling;
   }
 
+  // Make sure divs become blocks if they're at the top level and don't contain semantic markup
+  const isTopLevelNode =
+    node.parentNode && node.parentNode.nodeName.toLowerCase() === 'body';
+  const isUnstyledNode = node.nodeName.toLowerCase() === 'div';
+  if (isTopLevelNode && isUnstyledNode && !chunk.blocks.length) {
+    newBlock = true;
+  }
+
   if (newBlock) {
     chunk = joinChunks(
       chunk,
