@@ -70,6 +70,35 @@ function replaceText(
   );
 }
 
+function hasDecorationsChanged(
+  anchorKey: string,
+  editorState: EditorState,
+  newEditorState: EditorState
+): boolean {
+  var originalText = editorState.getCurrentContent().getBlockForKey(anchorKey).getText();
+  var newText = newEditorState.getCurrentContent().getBlockForKey(anchorKey).getText();
+
+  var originalAnchorTree = editorState.getBlockTree(anchorKey);
+  var newAnchorTree = newEditorState.getBlockTree(anchorKey);
+
+  var originalDecorations = getDecorations(originalAnchorTree).map(function(leafSet) {
+    return originalText.slice(leafSet.start, leafSet.end);
+  }).join('-');
+
+  var newDecorations = getDecorations(newAnchorTree).map(function(leafSet) {
+    return newText.slice(leafSet.start, leafSet.end);
+  }).join('-');
+
+  return originalDecorations !== newDecorations;
+}
+
+function getDecorations(anchorTree) {
+  return anchorTree.filter(function(leafSet) {
+    return !!leafSet.decoratorKey;
+  });
+}
+
+
 /**
  * When `onBeforeInput` executes, the browser is attempting to insert a
  * character into the editor. Apply this character data to the document,
@@ -232,6 +261,9 @@ function editOnBeforeInput(
     mustPreventNative =
       nullthrows(newEditorState.getDirectionMap()).get(anchorKey) !==
       nullthrows(editorState.getDirectionMap()).get(anchorKey);
+  }
+  if (!mustPreventNative) {
+    mustPreventNative = hasDecorationsChanged(anchorKey, editorState, newEditorState)
   }
 
   if (mustPreventNative) {
