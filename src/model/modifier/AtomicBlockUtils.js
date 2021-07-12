@@ -39,6 +39,7 @@ const AtomicBlockUtils = {
     editorState: EditorState,
     entityKey: string,
     character: string,
+    blockData?: Object
   ): EditorState {
     const contentState = editorState.getCurrentContent();
     const selectionState = editorState.getSelection();
@@ -86,7 +87,7 @@ const AtomicBlockUtils = {
 
     const fragmentArray = [
       new ContentBlockRecord(atomicBlockConfig),
-      new ContentBlockRecord(atomicDividerBlockConfig),
+      new ContentBlockRecord(atomicDividerBlockConfig)
     ];
 
     const fragment = BlockMapBuilder.createFromArray(fragmentArray);

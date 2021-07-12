@@ -32,6 +32,7 @@ contentState = contentState.createEntity('TOKEN', 'MUTABLE');
 const initialBlock = contentState.getBlockMap().first();
 const ENTITY_KEY = contentState.getLastCreatedEntityKey();
 const CHARACTER = ' ';
+const BLOCK_DATA = {};
 
 const getInvariantViolation = msg => {
   try {
@@ -58,10 +59,11 @@ const assertInsertAtomicBlock = (
   state = editorState,
   entity = ENTITY_KEY,
   character = CHARACTER,
-  experimentalTreeDataSupport = false,
+  blockData = BLOCK_DATA
 ) => {
+  experimentalTreeDataSupport = false,
   toggleExperimentalTreeDataSupport(experimentalTreeDataSupport);
-  const newState = AtomicBlockUtils.insertAtomicBlock(state, entity, character);
+  const newState = AtomicBlockUtils.insertAtomicBlock(state, entity, character, blockData);
   assertAtomic(newState);
   return newState;
 };
